@@ -11,27 +11,7 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Verifica se as credenciais estão preenchidas e se não são os valores padrão do exemplo
-export const isFirebaseConfigured = 
-  firebaseConfig.apiKey && 
-  firebaseConfig.apiKey !== "sua_api_key_aqui" &&
-  firebaseConfig.apiKey.trim() !== "" &&
-  firebaseConfig.projectId && 
-  firebaseConfig.projectId !== "seu_projeto_id" &&
-  firebaseConfig.projectId.trim() !== "";
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-let app;
-let auth = null;
-let db = null;
-
-if (isFirebaseConfigured) {
-  try {
-    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-    auth = getAuth(app);
-    db = getFirestore(app);
-  } catch (error) {
-    console.error("Erro ao inicializar o Firebase:", error);
-  }
-}
-
-export { auth, db };
+export const auth = getAuth(app);
+export const db = getFirestore(app);
