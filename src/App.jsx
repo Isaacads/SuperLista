@@ -681,7 +681,7 @@ function App() {
 
                                       <button
                                         onClick={(e) => deleteItem(e, item.id)}
-                                        className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors focus:outline-none opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors focus:outline-none"
                                         title="Remover item"
                                       >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -750,7 +750,7 @@ function App() {
                               {!isShoppingMode && (
                                 <button
                                   onClick={(e) => deleteItem(e, item.id)}
-                                  className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors focus:outline-none shrink-0 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                  className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors focus:outline-none shrink-0"
                                   title="Remover item"
                                 >
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
