@@ -1,22 +1,7 @@
 import { useState } from 'react';
 
 function LandingPage({ setView }) {
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const [checkoutStep, setCheckoutStep] = useState(1); // 1 = info/form, 2 = success
-
-  const handleStartSimulatedPayment = () => {
-    setShowCheckoutModal(true);
-    setCheckoutStep(1);
-  };
-
-  const handleConfirmPayment = () => {
-    setCheckoutStep(2);
-  };
-
-  const handleFinishCheckout = () => {
-    setShowCheckoutModal(false);
-    setView('login');
-  };
+  const kiwifyUrl = import.meta.env.VITE_KIWIFY_CHECKOUT_URL || "https://kiwify.com.br";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white text-gray-800 font-sans">
@@ -31,16 +16,18 @@ function LandingPage({ setView }) {
         <nav className="flex items-center gap-4">
           <button 
             onClick={() => setView('login')}
-            className="text-sm font-bold text-green-700 hover:text-green-950 transition-colors"
+            className="text-sm font-bold text-green-700 hover:text-green-950 transition-colors cursor-pointer"
           >
             Entrar
           </button>
-          <button 
-            onClick={handleStartSimulatedPayment}
-            className="px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-md hover:shadow-lg"
+          <a 
+            href={kiwifyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-md hover:shadow-lg text-center"
           >
             Começar Agora
-          </button>
+          </a>
         </nav>
       </header>
 
@@ -55,16 +42,18 @@ function LandingPage({ setView }) {
         <p className="text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
           Monte suas listas rapidamente com autocomplete, calcule seus gastos em tempo real, separe por categorias e compartilhe entre seus dispositivos de forma instantânea.
         </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <button 
-            onClick={handleStartSimulatedPayment}
-            className="px-8 py-4 text-base font-extrabold text-white bg-green-600 hover:bg-green-700 rounded-2xl transition-all shadow-lg hover:shadow-xl hover:scale-102"
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+          <a 
+            href={kiwifyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-8 py-4 text-base font-extrabold text-white bg-green-600 hover:bg-green-700 rounded-2xl transition-all shadow-lg hover:shadow-xl hover:scale-102 text-center"
           >
             Assinar Plano Anual — R$ 9,90
-          </button>
+          </a>
           <button 
             onClick={() => setView('login')}
-            className="px-8 py-4 text-base font-extrabold text-green-700 bg-green-100 hover:bg-green-200 rounded-2xl transition-all"
+            className="px-8 py-4 text-base font-extrabold text-green-700 bg-green-100 hover:bg-green-200 rounded-2xl transition-all cursor-pointer"
           >
             Já sou assinante
           </button>
@@ -177,12 +166,14 @@ function LandingPage({ setView }) {
               <span className="text-green-500 text-base">✓</span> Autocomplete de produtos brasileiros
             </li>
           </ul>
-          <button 
-            onClick={handleStartSimulatedPayment}
-            className="w-full py-4 text-base font-extrabold text-white bg-green-600 hover:bg-green-700 rounded-2xl transition-all shadow-md hover:shadow-lg"
+          <a 
+            href={kiwifyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-4 text-base font-extrabold text-white bg-green-600 hover:bg-green-700 rounded-2xl transition-all shadow-md hover:shadow-lg text-center block"
           >
             Assinar Agora
-          </button>
+          </a>
         </div>
       </section>
 
@@ -211,70 +202,6 @@ function LandingPage({ setView }) {
       <footer className="bg-white py-10 border-t border-green-100 text-center text-xs text-gray-400">
         <p>© 2026 SuperLista. Todos os direitos reservados.</p>
       </footer>
-
-      {/* Checkout Simulator Modal */}
-      {showCheckoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-gray-100 animate-scale-up">
-            
-            {checkoutStep === 1 ? (
-              <div className="p-6">
-                <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-4">
-                  <h3 className="text-lg font-black text-green-800">Checkout Simulado</h3>
-                  <button 
-                    onClick={() => setShowCheckoutModal(false)}
-                    className="text-gray-400 hover:text-gray-600 text-sm font-bold"
-                  >
-                    Fechar
-                  </button>
-                </div>
-                <div className="bg-green-50 p-4 rounded-xl text-green-950 mb-5 text-sm">
-                  <p className="font-bold">🛒 Compra de Licença Anual</p>
-                  <p className="text-xs text-green-700 mt-0.5">Acesso ilimitado ao SuperLista por 1 ano.</p>
-                  <div className="mt-3 font-bold text-lg text-green-800">R$ 9,90</div>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Forma de Pagamento Simulada</label>
-                    <select className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-700">
-                      <option>Pix (Aprovação Instantânea)</option>
-                      <option>Cartão de Crédito</option>
-                    </select>
-                  </div>
-                  <div className="pt-2 text-xs text-gray-400 italic">
-                    *Esta é uma simulação de vendas. Nenhum valor real será cobrado de você neste teste comercial.
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleConfirmPayment}
-                  className="w-full mt-6 py-3 font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-md"
-                >
-                  Confirmar Pagamento Simulado
-                </button>
-              </div>
-            ) : (
-              <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
-                  ✓
-                </div>
-                <h3 className="text-xl font-black text-green-800 mb-2">Pagamento Aprovado!</h3>
-                <p className="text-sm text-gray-500 mb-6">
-                  Sua licença anual do SuperLista foi ativada com sucesso. Agora vamos criar sua conta para sincronizar seus dados.
-                </p>
-                <button
-                  onClick={handleFinishCheckout}
-                  className="w-full py-3 font-bold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all shadow-md"
-                >
-                  Criar Minha Conta / Fazer Login
-                </button>
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
 
     </div>
   );

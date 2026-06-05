@@ -62,7 +62,6 @@ Thumbs.db
 
 # Sensitive files (auto-detected)
 .env
-.env.example
 dist
 node_modules
 
