@@ -198,6 +198,9 @@ function AuthView({ onLoginSuccess, setView }) {
               Assinar Plano
             </a>
           </div>
+          
+          <div>
+            <h2 className="text-center text-3xl font-extrabold text-green-800">
               Nova Senha
             </h2>
             <p className="mt-2 text-center text-sm text-gray-500">
@@ -291,6 +294,9 @@ function AuthView({ onLoginSuccess, setView }) {
               Assinar Plano
             </a>
           </div>
+          
+          <div>
+            <h2 className="text-center text-3xl font-extrabold text-green-800">
               Recuperar Senha
             </h2>
             <p className="mt-2 text-center text-sm text-gray-500">
