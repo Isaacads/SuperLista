@@ -3,9 +3,9 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword 
 } from 'firebase/auth';
-import { auth, isFirebaseConfigured } from './firebase';
+import { auth } from './firebase';
 
-function AuthView({ setView, onLoginSuccess }) {
+function AuthView({ onLoginSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,20 +18,6 @@ function AuthView({ setView, onLoginSuccess }) {
     
     if (!email.trim() || !password.trim()) {
       setError('Por favor, preencha todos os campos.');
-      return;
-    }
-
-    if (!isFirebaseConfigured) {
-      // Modo Demonstração/Simulação
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        onLoginSuccess({
-          uid: 'demo_user_123',
-          email: email,
-          isDemo: true
-        });
-      }, 1000);
       return;
     }
 
@@ -76,12 +62,8 @@ function AuthView({ setView, onLoginSuccess }) {
     }
   };
 
-  const handleDemoLogin = () => {
-    onLoginSuccess({
-      uid: 'demo_user_123',
-      email: 'usuario.demonstracao@email.com',
-      isDemo: true
-    });
+  const handleGoHome = () => {
+    window.location.href = '/';
   };
 
   return (
@@ -93,7 +75,7 @@ function AuthView({ setView, onLoginSuccess }) {
 
         <div>
           <button 
-            onClick={() => setView('landing')}
+            onClick={handleGoHome}
             className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-900 font-semibold mb-4 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
@@ -107,17 +89,6 @@ function AuthView({ setView, onLoginSuccess }) {
             {isLogin ? 'Acesse suas listas de qualquer dispositivo' : 'Comece a economizar e organizar suas compras agora'}
           </p>
         </div>
-
-        {!isFirebaseConfigured && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3.5 rounded-xl text-xs space-y-1">
-            <p className="font-bold flex items-center gap-1">
-              ⚠️ Modo de Demonstração Ativo
-            </p>
-            <p>
-              As credenciais do Firebase não foram configuradas. Você pode usar qualquer e-mail/senha para simular o acesso ou clicar no botão abaixo.
-            </p>
-          </div>
-        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
@@ -169,15 +140,6 @@ function AuthView({ setView, onLoginSuccess }) {
             </button>
           </div>
         </form>
-
-        {!isFirebaseConfigured && (
-          <button
-            onClick={handleDemoLogin}
-            className="w-full py-2.5 px-4 border border-dashed border-green-300 text-sm font-bold rounded-lg text-green-700 bg-green-50/50 hover:bg-green-50 transition-colors"
-          >
-            Acesso Rápido Simulado
-          </button>
-        )}
 
         <div className="text-center pt-2">
           <button

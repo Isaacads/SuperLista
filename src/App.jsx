@@ -12,8 +12,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 
-import { auth, db, isFirebaseConfigured } from './firebase';
-import LandingPage from './LandingPage';
+import { auth, db } from './firebase';
 import AuthView from './AuthView';
 
 const CATEGORIES = [
@@ -86,69 +85,41 @@ function App() {
   
   const inputRef = useRef(null);
 
-  // 1. Escutar estado de autenticação (Firebase) ou Sessão Demo
+  // 1. Escutar estado de autenticação do Firebase
   useEffect(() => {
-    if (isFirebaseConfigured) {
-      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        if (firebaseUser) {
-          setUser(firebaseUser);
-          setView('app');
-        } else {
-          setUser(null);
-          setView('landing');
-          setItems([]);
-        }
-        setAuthLoading(false);
-      });
-      return unsubscribe;
-    } else {
-      // Modo Demo Local
-      const savedDemoUser = localStorage.getItem('demo_user');
-      if (savedDemoUser) {
-        const u = JSON.parse(savedDemoUser);
-        setUser(u);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
         setView('app');
       } else {
         setUser(null);
-        setView('landing');
+        setView('login');
+        setItems([]);
       }
       setAuthLoading(false);
-    }
+    });
+    return unsubscribe;
   }, []);
 
-  // 2. Sincronizar listas (Firestore ou LocalStorage)
+  // 2. Sincronizar listas em tempo real do Firestore
   useEffect(() => {
     if (!user) return;
 
-    if (!user.isDemo && isFirebaseConfigured) {
-      // Sincronização em tempo real do Firestore para o usuário
-      const itemsRef = collection(db, "users", user.uid, "items");
-      const q = query(itemsRef, orderBy("createdAt", "desc"));
-      
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const firestoreItems = [];
-        snapshot.forEach((doc) => {
-          firestoreItems.push({ id: doc.id, ...doc.data() });
-        });
-        setItems(firestoreItems);
-      }, (err) => {
-        console.error("Erro na escuta do Firestore:", err);
+    const itemsRef = collection(db, "users", user.uid, "items");
+    const q = query(itemsRef, orderBy("createdAt", "desc"));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const firestoreItems = [];
+      snapshot.forEach((doc) => {
+        firestoreItems.push({ id: doc.id, ...doc.data() });
       });
+      setItems(firestoreItems);
+    }, (err) => {
+      console.error("Erro na escuta do Firestore:", err);
+    });
 
-      return unsubscribe;
-    } else {
-      // Modo Demo/LocalStorage
-      const saved = localStorage.getItem(`grocery_items_${user.uid}`);
-      setItems(saved ? JSON.parse(saved) : []);
-    }
+    return unsubscribe;
   }, [user]);
-
-  // Salvar no localStorage apenas para usuários Demo
-  useEffect(() => {
-    if (user && (user.isDemo || !isFirebaseConfigured)) {
-      localStorage.setItem(`grocery_items_${user.uid}`, JSON.stringify(items));
-    }
-  }, [items, user]);
 
   // 3. Fechar sugestões ao clicar fora
   useEffect(() => {
@@ -162,52 +133,14 @@ function App() {
   }, []);
 
   // Sucesso no Login / Cadastro
-  const handleLoginSuccess = async (loggedInUser) => {
+  const handleLoginSuccess = (loggedInUser) => {
     setUser(loggedInUser);
     setView('app');
-    
-    if (loggedInUser.isDemo) {
-      localStorage.setItem('demo_user', JSON.stringify(loggedInUser));
-    }
-
-    // Migração de itens locais salvos na máquina sem conta
-    const guestItems = localStorage.getItem('grocery_items');
-    if (guestItems) {
-      const parsedItems = JSON.parse(guestItems);
-      if (parsedItems.length > 0) {
-        if (!loggedInUser.isDemo && isFirebaseConfigured) {
-          try {
-            const batch = writeBatch(db);
-            parsedItems.forEach((item) => {
-              const itemRef = doc(db, "users", loggedInUser.uid, "items", item.id);
-              batch.set(itemRef, {
-                ...item,
-                createdAt: Date.now()
-              });
-            });
-            await batch.commit();
-            localStorage.removeItem('grocery_items');
-          } catch (e) {
-            console.error("Falha ao migrar itens:", e);
-          }
-        } else {
-          // Salva na conta demo local
-          localStorage.setItem(`grocery_items_${loggedInUser.uid}`, guestItems);
-          localStorage.removeItem('grocery_items');
-        }
-      }
-    }
   };
 
   const handleLogout = async () => {
-    if (isFirebaseConfigured) {
-      await signOut(auth);
-    } else {
-      localStorage.removeItem('demo_user');
-      setUser(null);
-      setView('landing');
-      setItems([]);
-    }
+    await signOut(auth);
+    window.location.href = '/';
   };
 
   // Funções CRUD do app
@@ -234,14 +167,10 @@ function App() {
       createdAt: Date.now()
     };
     
-    if (!user.isDemo && isFirebaseConfigured) {
-      try {
-        await setDoc(doc(db, "users", user.uid, "items", itemId), newItem);
-      } catch (err) {
-        console.error("Erro ao adicionar item no Firestore:", err);
-      }
-    } else {
-      setItems([{ id: itemId, ...newItem }, ...items]);
+    try {
+      await setDoc(doc(db, "users", user.uid, "items", itemId), newItem);
+    } catch (err) {
+      console.error("Erro ao adicionar item no Firestore:", err);
     }
     
     setInputValue('');
@@ -267,32 +196,22 @@ function App() {
     const item = items.find(i => i.id === id);
     if (!item) return;
 
-    if (!user.isDemo && isFirebaseConfigured) {
-      try {
-        await updateDoc(doc(db, "users", user.uid, "items", id), {
-          bought: !item.bought
-        });
-      } catch (err) {
-        console.error("Erro ao atualizar item no Firestore:", err);
-      }
-    } else {
-      setItems(items.map(i => 
-        i.id === id ? { ...i, bought: !i.bought } : i
-      ));
+    try {
+      await updateDoc(doc(db, "users", user.uid, "items", id), {
+        bought: !item.bought
+      });
+    } catch (err) {
+      console.error("Erro ao atualizar item no Firestore:", err);
     }
   };
 
   const deleteItem = async (e, id) => {
     e.stopPropagation();
     
-    if (!user.isDemo && isFirebaseConfigured) {
-      try {
-        await deleteDoc(doc(db, "users", user.uid, "items", id));
-      } catch (err) {
-        console.error("Erro ao deletar item no Firestore:", err);
-      }
-    } else {
-      setItems(items.filter(i => i.id !== id));
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "items", id));
+    } catch (err) {
+      console.error("Erro ao deletar item no Firestore:", err);
     }
   };
 
@@ -302,56 +221,39 @@ function App() {
     if (!item) return;
     const newQty = Math.max(1, (item.quantity || 1) + delta);
 
-    if (!user.isDemo && isFirebaseConfigured) {
-      try {
-        await updateDoc(doc(db, "users", user.uid, "items", id), {
-          quantity: newQty
-        });
-      } catch (err) {
-        console.error("Erro ao atualizar quantidade no Firestore:", err);
-      }
-    } else {
-      setItems(items.map(i => {
-        if (i.id === id) {
-          return { ...i, quantity: newQty };
-        }
-        return i;
-      }));
+    try {
+      await updateDoc(doc(db, "users", user.uid, "items", id), {
+        quantity: newQty
+      });
+    } catch (err) {
+      console.error("Erro ao atualizar quantidade no Firestore:", err);
     }
   };
 
   const clearBoughtItems = async () => {
     if (window.confirm(`Remover ${boughtItems.length} itens comprados?`)) {
-      if (!user.isDemo && isFirebaseConfigured) {
-        try {
-          const batch = writeBatch(db);
-          boughtItems.forEach((i) => {
-            batch.delete(doc(db, "users", user.uid, "items", i.id));
-          });
-          await batch.commit();
-        } catch (err) {
-          console.error("Erro ao deletar itens comprados:", err);
-        }
-      } else {
-        setItems(items.filter(i => !i.bought));
+      try {
+        const batch = writeBatch(db);
+        boughtItems.forEach((i) => {
+          batch.delete(doc(db, "users", user.uid, "items", i.id));
+        });
+        await batch.commit();
+      } catch (err) {
+        console.error("Erro ao deletar itens comprados:", err);
       }
     }
   };
 
   const clearAllItems = async () => {
     if (window.confirm("Atenção! Deseja remover todos os itens da lista completamente?")) {
-      if (!user.isDemo && isFirebaseConfigured) {
-        try {
-          const batch = writeBatch(db);
-          items.forEach((i) => {
-            batch.delete(doc(db, "users", user.uid, "items", i.id));
-          });
-          await batch.commit();
-        } catch (err) {
-          console.error("Erro ao limpar lista:", err);
-        }
-      } else {
-        setItems([]);
+      try {
+        const batch = writeBatch(db);
+        items.forEach((i) => {
+          batch.delete(doc(db, "users", user.uid, "items", i.id));
+        });
+        await batch.commit();
+      } catch (err) {
+        console.error("Erro ao limpar lista:", err);
       }
     }
   };
@@ -395,13 +297,8 @@ function App() {
     );
   }
 
-  if (view === 'landing') {
-    // App acessado via /app — mostra login direto, landing está na raiz (/)
-    return <AuthView setView={setView} onLoginSuccess={handleLoginSuccess} />;
-  }
-
-  if (view === 'login') {
-    return <AuthView setView={setView} onLoginSuccess={handleLoginSuccess} />;
+  if (view === 'login' || view === 'landing') {
+    return <AuthView onLoginSuccess={handleLoginSuccess} />;
   }
 
   // Visual da Lista de Compras Principal
@@ -414,11 +311,7 @@ function App() {
           <div className="flex items-center gap-1.5 text-green-700 font-medium">
             <span className="w-2 h-2 rounded-full bg-green-500"></span>
             <span className="truncate max-w-[150px]">{user?.email}</span>
-            {user?.isDemo && (
-              <span className="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[10px]">
-                Demo
-              </span>
-            )}
+  
           </div>
           <button 
             onClick={handleLogout}
