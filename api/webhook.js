@@ -4,6 +4,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
+  // Validação do Token de Segurança
+  const expectedToken = process.env.VITE_KIWIFY_WEBHOOK_TOKEN || 'xmwe0p3tnj0';
+  const providedToken = req.query.token;
+
+  if (providedToken !== expectedToken) {
+    console.error("❌ Token de verificação inválido ou ausente.");
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   try {
     const data = req.body;
     
