@@ -5,7 +5,7 @@ import {
 } from 'firebase/auth';
 import { auth } from './firebase';
 
-function AuthView({ onLoginSuccess }) {
+function AuthView({ onLoginSuccess, setView }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -63,7 +63,11 @@ function AuthView({ onLoginSuccess }) {
   };
 
   const handleGoHome = () => {
-    window.location.href = '/';
+    if (setView) {
+      setView('landing');
+    } else {
+      window.location.href = '/';
+    }
   };
 
   return (

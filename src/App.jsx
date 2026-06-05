@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 
 import { auth, db } from './firebase';
+import LandingPage from './LandingPage';
 import AuthView from './AuthView';
 
 const CATEGORIES = [
@@ -93,7 +94,7 @@ function App() {
         setView('app');
       } else {
         setUser(null);
-        setView('login');
+        setView('landing');
         setItems([]);
       }
       setAuthLoading(false);
@@ -297,8 +298,12 @@ function App() {
     );
   }
 
-  if (view === 'login' || view === 'landing') {
-    return <AuthView onLoginSuccess={handleLoginSuccess} />;
+  if (view === 'landing') {
+    return <LandingPage setView={setView} />;
+  }
+
+  if (view === 'login') {
+    return <AuthView setView={setView} onLoginSuccess={handleLoginSuccess} />;
   }
 
   // Visual da Lista de Compras Principal
