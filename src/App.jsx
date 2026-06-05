@@ -396,11 +396,8 @@ function App() {
   }
 
   if (view === 'landing') {
-    // Redireciona para a página estática de apresentação (public/landing.html)
-    // Passa a URL da Kiwify como parâmetro para o HTML estático poder usá-la
-    const kiwifyUrl = import.meta.env.VITE_KIWIFY_CHECKOUT_URL || 'https://kiwify.com.br';
-    window.location.href = `/landing.html?kiwify=${encodeURIComponent(kiwifyUrl)}`;
-    return null; // impede que o React renderize algo adicional
+    // App acessado via /app — mostra login direto, landing está na raiz (/)
+    return <AuthView setView={setView} onLoginSuccess={handleLoginSuccess} />;
   }
 
   if (view === 'login') {
