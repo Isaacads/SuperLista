@@ -8,6 +8,7 @@ import {
 import { auth } from './firebase';
 
 function AuthView({ onLoginSuccess, setView }) {
+  const kiwifyUrl = import.meta.env.VITE_KIWIFY_CHECKOUT_URL || "https://kiwify.com.br";
   // 'login' | 'forgot' | 'resetPassword'
   const [mode, setMode] = useState('login');
   const [email, setEmail] = useState('');
@@ -180,16 +181,23 @@ function AuthView({ onLoginSuccess, setView }) {
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl border border-green-100 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-green-600"></div>
 
-          <div>
+          <div className="flex justify-between items-center mb-4">
             <button 
               onClick={handleGoHome}
-              className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-900 font-semibold mb-4 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-900 font-semibold transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
               Voltar para a Home
             </button>
-            
-            <h2 className="text-center text-3xl font-extrabold text-green-800">
+            <a 
+              href={kiwifyUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+            >
+              Assinar Plano
+            </a>
+          </div>
               Nova Senha
             </h2>
             <p className="mt-2 text-center text-sm text-gray-500">
@@ -266,16 +274,23 @@ function AuthView({ onLoginSuccess, setView }) {
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl border border-green-100 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-green-600"></div>
 
-          <div>
+          <div className="flex justify-between items-center mb-4">
             <button 
               onClick={() => { setMode('login'); setError(''); setSuccess(''); }}
-              className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-900 font-semibold mb-4 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-900 font-semibold transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
               Voltar para o Login
             </button>
-            
-            <h2 className="text-center text-3xl font-extrabold text-green-800">
+            <a 
+              href={kiwifyUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+            >
+              Assinar Plano
+            </a>
+          </div>
               Recuperar Senha
             </h2>
             <p className="mt-2 text-center text-sm text-gray-500">
@@ -348,15 +363,25 @@ function AuthView({ onLoginSuccess, setView }) {
         {/* Decoração sutil */}
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-green-600"></div>
 
-        <div>
+        <div className="flex justify-between items-center mb-4">
           <button 
             onClick={handleGoHome}
-            className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-900 font-semibold mb-4 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-green-700 hover:text-green-900 font-semibold transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Voltar para a Home
           </button>
-          
+          <a 
+            href={kiwifyUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-xs font-bold text-white bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+          >
+            Assinar Plano
+          </a>
+        </div>
+        
+        <div>
           <h2 className="text-center text-3xl font-extrabold text-green-800">
             Entre na sua Conta
           </h2>
