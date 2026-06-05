@@ -141,7 +141,9 @@ function App() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    window.location.href = '/';
+    setUser(null);
+    setItems([]);
+    setView('landing');
   };
 
   // Funções CRUD do app
