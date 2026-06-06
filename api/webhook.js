@@ -1,3 +1,18 @@
+import admin from 'firebase-admin';
+
+// Inicializa o Firebase Admin SDK usando a variável de ambiente
+if (!admin.apps.length) {
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log("✅ Firebase Admin inicializado com sucesso.");
+  } catch (error) {
+    console.error("❌ Falha ao inicializar o Firebase Admin. Certifique-se de que FIREBASE_SERVICE_ACCOUNT está configurada:", error);
+  }
+}
+
 export default async function handler(req, res) {
   // Apenas aceita requisições POST da Kiwify
   if (req.method !== 'POST') {
@@ -39,47 +54,82 @@ export default async function handler(req, res) {
     // Busca e-mail e documento de forma dinâmica e tolerante a maiúsculas/minúsculas e aninhamentos
     const email = findVal(data, 'email');
     const documentNumber = findVal(data, 'cpf') || findVal(data, 'cnpj') || findVal(data, 'document') || findVal(data, 'documento');
+    const eventType = findVal(data, 'webhook_event_type') || findVal(data, 'event_type');
+    const orderStatus = findVal(data, 'order_status') || findVal(data, 'status');
 
-    if (!email || !documentNumber) {
-        console.log("⚠️ Payload incompleto recebido:", JSON.stringify(data));
-        // Retornamos 200 para a Kiwify parar de tentar reenviar em caso de teste/payload sem cliente
-        return res.status(200).json({ message: "Webhook recebido, mas sem dados suficientes para criar conta." });
+    console.log(`🔌 Recebido webhook da Kiwify. Evento: ${eventType || 'N/A'}, Status: ${orderStatus || 'N/A'}, Email: ${email || 'N/A'}`);
+
+    if (!email) {
+        console.log("⚠️ Payload incompleto recebido (falta e-mail):", JSON.stringify(data));
+        return res.status(200).json({ message: "Webhook recebido, mas e-mail não identificado." });
     }
 
-    // Limpa o documento para conter apenas os números (ex: 123.456.789-00 -> 12345678900)
-    const password = String(documentNumber).replace(/\D/g, '');
+    // Determina o tipo de ação com base nos gatilhos da Kiwify
+    const isActivation = 
+      eventType === 'compra_aprovada' || 
+      eventType === 'subscription_renewed' || 
+      orderStatus === 'paid';
 
-    // Utiliza a chave do Firebase que já está configurada na Vercel
-    const apiKey = process.env.VITE_FIREBASE_API_KEY;
-    
-    if (!apiKey) {
-      console.error("❌ Erro interno: VITE_FIREBASE_API_KEY ausente.");
-      return res.status(500).json({ error: "Erro de configuração no servidor." });
-    }
+    const isDeactivation = 
+      eventType === 'compra_reembolsada' || 
+      eventType === 'chargeback' || 
+      eventType === 'subscription_canceled' || 
+      eventType === 'subscription_late' || 
+      orderStatus === 'refunded' || 
+      orderStatus === 'chargedback';
 
-    // Faz a chamada para a API REST do Firebase Authentication
-    const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+    if (isActivation) {
+      if (!documentNumber) {
+        console.log("⚠️ Payload de ativação recebido sem documento (CPF/CNPJ) para senha.");
+        return res.status(200).json({ message: "Webhook de ativação recebido, mas sem documento para gerar a senha." });
+      }
+
+      // Limpa o documento para conter apenas os números (ex: 123.456.789-00 -> 12345678900)
+      const password = String(documentNumber).replace(/\D/g, '');
+
+      try {
+        const userRecord = await admin.auth().getUserByEmail(email);
+        // Se o usuário já existe e está desativado, ativa ele de volta
+        if (userRecord.disabled) {
+          await admin.auth().updateUser(userRecord.uid, { disabled: false });
+          console.log(`✅ Conta reativada com sucesso para: ${email}`);
+          return res.status(200).json({ message: "Conta reativada com sucesso" });
+        } else {
+          console.log(`⚠️ A conta ${email} já existe e está ativa.`);
+          return res.status(200).json({ message: "A conta já existe e está ativa" });
+        }
+      } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+          // Cria o usuário
+          await admin.auth().createUser({
             email: email,
             password: password,
-            returnSecureToken: false
-        })
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-        console.log(`✅ Conta criada com sucesso para: ${email}`);
-        return res.status(200).json({ message: "Conta criada com sucesso no Firebase" });
-    } else if (result.error && result.error.message === 'EMAIL_EXISTS') {
-        console.log(`⚠️ A conta ${email} já existe.`);
-        // Conta já existia, então consideramos sucesso para a plataforma de pagamentos
-        return res.status(200).json({ message: "A conta já existia no sistema" });
+            emailVerified: true
+          });
+          console.log(`✅ Conta criada com sucesso para: ${email}`);
+          return res.status(200).json({ message: "Conta criada com sucesso no Firebase" });
+        } else {
+          throw error;
+        }
+      }
+    } else if (isDeactivation) {
+      try {
+        const userRecord = await admin.auth().getUserByEmail(email);
+        // Desativa o usuário
+        await admin.auth().updateUser(userRecord.uid, { disabled: true });
+        console.log(`🚫 Conta desativada com sucesso para: ${email} (Evento: ${eventType || orderStatus})`);
+        return res.status(200).json({ message: "Conta desativada com sucesso no Firebase" });
+      } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+          console.log(`⚠️ Tentou desativar ${email}, mas o usuário não foi encontrado.`);
+          return res.status(200).json({ message: "Usuário não encontrado para desativação" });
+        } else {
+          throw error;
+        }
+      }
     } else {
-        console.error(`❌ Erro do Firebase ao criar ${email}:`, result.error.message);
-        return res.status(400).json({ error: result.error.message });
+      console.log(`ℹ️ Evento ignorado (não é de ativação nem de desativação): ${eventType || orderStatus}`);
+      return res.status(200).json({ message: "Evento ignorado" });
     }
 
   } catch (error) {
