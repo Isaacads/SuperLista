@@ -396,6 +396,14 @@ function AuthView({ onLoginSuccess, setView }) {
           </p>
         </div>
 
+        <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl text-sm text-blue-800 flex items-start gap-3">
+          <span className="text-xl">👋</span>
+          <div>
+            <strong className="block mb-0.5">Primeiro acesso?</strong>
+            Use o e-mail e o número de documento (CPF ou CNPJ) utilizado na compra como senha.
+          </div>
+        </div>
+
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-medium">
