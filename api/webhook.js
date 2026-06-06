@@ -13,13 +13,32 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // Função auxiliar para buscar chaves de forma case-insensitive em objetos aninhados
+  function findVal(object, keyName) {
+    if (!object || typeof object !== 'object') return undefined;
+    for (const key of Object.keys(object)) {
+      if (key.toLowerCase() === keyName.toLowerCase()) {
+        return object[key];
+      }
+    }
+    for (const key of Object.keys(object)) {
+      const val = object[key];
+      if (val && typeof val === 'object') {
+        const found = findVal(val, keyName);
+        if (found !== undefined) {
+          return found;
+        }
+      }
+    }
+    return undefined;
+  }
+
   try {
     const data = req.body;
     
-    // TODO: Ajustaremos estes campos assim que você enviar o payload real da Kiwify
-    // Estamos tentando adivinhar as chaves mais comuns de plataformas de pagamento
-    const email = data?.email || data?.Customer?.email || data?.cliente?.email;
-    const documentNumber = data?.document || data?.Customer?.cpf || data?.Customer?.cnpj || data?.cliente?.cpf;
+    // Busca e-mail e documento de forma dinâmica e tolerante a maiúsculas/minúsculas e aninhamentos
+    const email = findVal(data, 'email');
+    const documentNumber = findVal(data, 'cpf') || findVal(data, 'cnpj') || findVal(data, 'document') || findVal(data, 'documento');
 
     if (!email || !documentNumber) {
         console.log("⚠️ Payload incompleto recebido:", JSON.stringify(data));
