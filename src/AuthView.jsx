@@ -453,7 +453,7 @@ function AuthView({ onLoginSuccess, setView }) {
             onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}
             className="text-sm font-bold text-green-600 hover:text-green-700 transition-colors"
           >
-            Esqueceu sua senha?
+            Esqueceu sua senha?/alterar senha
           </button>
         </div>
 
