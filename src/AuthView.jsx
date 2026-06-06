@@ -28,10 +28,13 @@ function AuthView({ onLoginSuccess, setView }) {
     const modeParam = urlParams.get('mode');
     const code = urlParams.get('oobCode');
     const isFirstAccessParam = urlParams.get('firstAccess') === 'true' || urlParams.get('first') === 'true';
-    const hasAccessed = localStorage.getItem('superlista_has_accessed') === 'true';
+    const hasDismissed = localStorage.getItem('superlista_dismissed_first_access') === 'true';
 
-    if (isFirstAccessParam || !hasAccessed) {
+    if (isFirstAccessParam && !hasDismissed) {
       setShowFirstAccess(true);
+      // Limpa os parâmetros de primeiro acesso da URL para manter a barra de endereços limpa
+      const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: newUrl }, '', newUrl);
     }
 
     if (modeParam === 'resetPassword' && code) {
@@ -61,7 +64,7 @@ function AuthView({ onLoginSuccess, setView }) {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      localStorage.setItem('superlista_has_accessed', 'true');
+      localStorage.setItem('superlista_dismissed_first_access', 'true');
       onLoginSuccess(userCredential.user);
     } catch (err) {
       console.error(err);
@@ -415,7 +418,7 @@ function AuthView({ onLoginSuccess, setView }) {
               type="button"
               onClick={() => {
                 setShowFirstAccess(false);
-                localStorage.setItem('superlista_has_accessed', 'true');
+                localStorage.setItem('superlista_dismissed_first_access', 'true');
               }}
               className="absolute top-2 right-2 text-blue-400 hover:text-blue-600 transition-colors"
               title="Fechar"
