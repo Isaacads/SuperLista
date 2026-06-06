@@ -94,7 +94,12 @@ function App() {
         setView('app');
       } else {
         setUser(null);
-        setView('landing');
+        const path = window.location.pathname;
+        if (path === '/login' || path === '/app') {
+          setView('login');
+        } else {
+          setView('landing');
+        }
         setItems([]);
       }
       setAuthLoading(false);
