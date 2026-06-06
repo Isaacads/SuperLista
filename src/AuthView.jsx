@@ -20,12 +20,19 @@ function AuthView({ onLoginSuccess, setView }) {
   const [loading, setLoading] = useState(false);
   const [oobCode, setOobCode] = useState(null);
   const [resetEmail, setResetEmail] = useState('');
+  const [showFirstAccess, setShowFirstAccess] = useState(false);
 
-  // Verifica se a URL tem parâmetros de reset de senha do Firebase
+  // Verifica se a URL tem parâmetros de reset de senha do Firebase ou se é primeiro acesso
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const modeParam = urlParams.get('mode');
     const code = urlParams.get('oobCode');
+    const isFirstAccessParam = urlParams.get('firstAccess') === 'true' || urlParams.get('first') === 'true';
+    const hasAccessed = localStorage.getItem('superlista_has_accessed') === 'true';
+
+    if (isFirstAccessParam || !hasAccessed) {
+      setShowFirstAccess(true);
+    }
 
     if (modeParam === 'resetPassword' && code) {
       setOobCode(code);
@@ -54,6 +61,7 @@ function AuthView({ onLoginSuccess, setView }) {
     setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      localStorage.setItem('superlista_has_accessed', 'true');
       onLoginSuccess(userCredential.user);
     } catch (err) {
       console.error(err);
@@ -396,13 +404,28 @@ function AuthView({ onLoginSuccess, setView }) {
           </p>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl text-sm text-blue-800 flex items-start gap-3">
-          <span className="text-xl">👋</span>
-          <div>
-            <strong className="block mb-0.5">Primeiro acesso?</strong>
-            Use o e-mail e o número de documento (CPF ou CNPJ) utilizado na compra como senha.
+        {showFirstAccess && (
+          <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl text-sm text-blue-800 flex items-start gap-3 relative animate-fade-in">
+            <span className="text-xl">👋</span>
+            <div className="pr-6">
+              <strong className="block mb-0.5">Primeiro acesso?</strong>
+              Use o e-mail e o número de documento (CPF ou CNPJ) utilizado na compra como senha.
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowFirstAccess(false);
+                localStorage.setItem('superlista_has_accessed', 'true');
+              }}
+              className="absolute top-2 right-2 text-blue-400 hover:text-blue-600 transition-colors"
+              title="Fechar"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-        </div>
+        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           {error && (
